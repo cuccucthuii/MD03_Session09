@@ -24,18 +24,21 @@ public class CandidateServiceImpl implements ICandidateService {
     @Override
     public Candidate candidateApply(CandidateApplyDto reuqest) throws IOException {
         MultipartFile cvFile = reuqest.getCvFile();
-        String fileName = cvFile.getOriginalFilename();
         if (cvFile == null || cvFile.isEmpty()) {
             throw new RuntimeException("CV khong dc de trong!");
         }
+        String fileName = cvFile.getOriginalFilename();
         if (!fileName.endsWith(".pdf")) {
             throw new RuntimeException("CV phai la dinh dang PDF");
         }
         Map uploadFile = cloudinary.uploader().upload(
                 cvFile.getBytes(),
-                ObjectUtils.emptyMap()
+                ObjectUtils.asMap(
+                        "resource_type", "auto", // Automatically detects PDF as an image or raw file
+                        "folder", "pdf_uploads" // Optional: specify a folder in Cloudinary
+                )
         );
-        String url = (String) uploadFile.get("url");
+        String url = (String) uploadFile.get("secure_url");
         // To entity
         Candidate candidate = Candidate.builder()
                 .name(reuqest.getName())
